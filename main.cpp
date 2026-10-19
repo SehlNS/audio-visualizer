@@ -15,9 +15,15 @@ float audioBuffer[AudioBufferSize]{};
 size_t audioWriteIndex = 0;
 std::mutex audioMutex;
 
+enum class DisplayStyle {
+    Waveform,
+    Bars,
+    PixelSpectrum
+};
+
 struct PhosphorTheme {
     const char* name;
-    bool bars;
+    DisplayStyle style;
     Color background;
     Color phosphor;
     Color threshold;
@@ -67,17 +73,21 @@ int main() {
     SetTargetFPS(60);
 
     const PhosphorTheme themes[] = {
-        {"WALNUT", false, {18, 13, 10, 255}, {224, 177, 112, 255}, {255, 118, 48, 255}, {202, 169, 126, 255}, {242, 220, 180, 255}},
-        {"MOSS", false, {12, 17, 12, 255}, {176, 190, 128, 255}, {222, 197, 67, 255}, {155, 174, 126, 255}, {230, 220, 177, 255}},
-        {"COPPER", false, {20, 11, 9, 255}, {222, 145, 95, 255}, {232, 88, 100, 255}, {194, 119, 85, 255}, {240, 196, 151, 255}},
-        {"SEPIA", false, {22, 16, 11, 255}, {218, 190, 139, 255}, {251, 213, 146, 255}, {170, 145, 109, 255}, {238, 220, 180, 255}},
-        {"OLIVE", false, {13, 16, 10, 255}, {184, 184, 116, 255}, {191, 205, 86, 255}, {151, 163, 112, 255}, {226, 215, 168, 255}},
-        {"CLAY", false, {22, 13, 10, 255}, {211, 145, 105, 255}, {245, 152, 75, 255}, {178, 125, 98, 255}, {238, 197, 158, 255}},
-        {"NEON", false, {7, 12, 27, 255}, {44, 238, 225, 255}, {255, 62, 155, 255}, {72, 160, 185, 255}, {255, 231, 130, 255}},
-        {"SUNSET", false, {28, 10, 25, 255}, {255, 110, 105, 255}, {255, 225, 76, 255}, {207, 94, 116, 255}, {255, 202, 128, 255}},
-        {"ARCADE", false, {8, 18, 19, 255}, {163, 255, 61, 255}, {245, 72, 220, 255}, {59, 226, 181, 255}, {255, 244, 118, 255}},
-        {"NEON BARS", true, {7, 12, 25, 255}, {76, 221, 255, 255}, {255, 64, 172, 255}, {75, 147, 189, 255}, {255, 235, 143, 255}},
-        {"EMBER BARS", true, {23, 10, 8, 255}, {255, 132, 52, 255}, {255, 220, 73, 255}, {174, 83, 54, 255}, {255, 224, 163, 255}}
+        {"WALNUT", DisplayStyle::Waveform, {18, 13, 10, 255}, {224, 177, 112, 255}, {255, 118, 48, 255}, {202, 169, 126, 255}, {242, 220, 180, 255}},
+        {"MOSS", DisplayStyle::Waveform, {12, 17, 12, 255}, {176, 190, 128, 255}, {222, 197, 67, 255}, {155, 174, 126, 255}, {230, 220, 177, 255}},
+        {"COPPER", DisplayStyle::Waveform, {20, 11, 9, 255}, {222, 145, 95, 255}, {232, 88, 100, 255}, {194, 119, 85, 255}, {240, 196, 151, 255}},
+        {"SEPIA", DisplayStyle::Waveform, {22, 16, 11, 255}, {218, 190, 139, 255}, {251, 213, 146, 255}, {170, 145, 109, 255}, {238, 220, 180, 255}},
+        {"OLIVE", DisplayStyle::Waveform, {13, 16, 10, 255}, {184, 184, 116, 255}, {191, 205, 86, 255}, {151, 163, 112, 255}, {226, 215, 168, 255}},
+        {"CLAY", DisplayStyle::Waveform, {22, 13, 10, 255}, {211, 145, 105, 255}, {245, 152, 75, 255}, {178, 125, 98, 255}, {238, 197, 158, 255}},
+        {"NEON", DisplayStyle::Waveform, {7, 12, 27, 255}, {44, 238, 225, 255}, {255, 62, 155, 255}, {72, 160, 185, 255}, {255, 231, 130, 255}},
+        {"SUNSET", DisplayStyle::Waveform, {28, 10, 25, 255}, {255, 110, 105, 255}, {255, 225, 76, 255}, {207, 94, 116, 255}, {255, 202, 128, 255}},
+        {"ARCADE", DisplayStyle::Waveform, {8, 18, 19, 255}, {163, 255, 61, 255}, {245, 72, 220, 255}, {59, 226, 181, 255}, {255, 244, 118, 255}},
+        {"NEON BARS", DisplayStyle::Bars, {7, 12, 25, 255}, {76, 221, 255, 255}, {255, 64, 172, 255}, {75, 147, 189, 255}, {255, 235, 143, 255}},
+        {"EMBER BARS", DisplayStyle::Bars, {23, 10, 8, 255}, {255, 132, 52, 255}, {255, 220, 73, 255}, {174, 83, 54, 255}, {255, 224, 163, 255}},
+        {"PIXEL SPECTRUM", DisplayStyle::PixelSpectrum, {5, 7, 15, 255}, {255, 91, 34, 255}, {238, 67, 181, 255}, {255, 190, 42, 255}, {151, 73, 213, 255}},
+        {"PIXEL CYBER", DisplayStyle::PixelSpectrum, {5, 7, 15, 255}, {42, 240, 205, 255}, {255, 56, 181, 255}, {49, 139, 255, 255}, {255, 235, 82, 255}},
+        {"PIXEL ICE", DisplayStyle::PixelSpectrum, {5, 8, 19, 255}, {50, 128, 255, 255}, {145, 90, 255, 255}, {48, 224, 255, 255}, {238, 249, 255, 255}},
+        {"PIXEL FIRE", DisplayStyle::PixelSpectrum, {15, 5, 5, 255}, {238, 35, 43, 255}, {255, 168, 22, 255}, {255, 78, 24, 255}, {255, 239, 120, 255}},
     };
     constexpr int themeCount = sizeof(themes) / sizeof(themes[0]);
     int themeIndex = 0;
@@ -184,17 +194,26 @@ int main() {
 
         // --- 3. Reactive Background Graticule & Scanlines ---
         // Background grid pulses and brightens based on overall warp/signal intensity
-        Color gridColor = (Color){(unsigned char)(activePhosphor.r * 0.2f), 
-                                  (unsigned char)(activePhosphor.g * 0.2f), 
+        Color gridColor = (Color){(unsigned char)(activePhosphor.r * 0.2f),
+                                  (unsigned char)(activePhosphor.g * 0.2f),
                                   (unsigned char)(activePhosphor.b * 0.2f), 255};
-        
-        DrawRectangleLines(10, 42, 326, 230, gridColor);
-        DrawLine(10, screenHeight / 2, 336, screenHeight / 2, Fade(gridColor, 0.7f));
-        DrawLine(173, 42, 173, 272, Fade(gridColor, 0.7f));
 
-        // Subtle CRT scanline effect across the background
-        for (int y = 50; y < 270; y += 8) {
-            DrawLine(11, y, 335, y, Fade(detailColor, 0.025f));
+        if (themes[themeIndex].style == DisplayStyle::PixelSpectrum) {
+            DrawRectangle(10, 42, 326, 230, (Color){5, 7, 15, 255});
+            DrawRectangleLines(10, 42, 326, 230, Fade(detailColor, 0.8f));
+            for (int y = 52; y < 267; y += 12) {
+                for (int x = 19; x < 331; x += 12) {
+                    DrawRectangle(x, y, 1, 1, Fade(detailColor, 0.16f));
+                }
+            }
+        } else {
+            DrawRectangleLines(10, 42, 326, 230, gridColor);
+            DrawLine(10, screenHeight / 2, 336, screenHeight / 2, Fade(gridColor, 0.7f));
+            DrawLine(173, 42, 173, 272, Fade(gridColor, 0.7f));
+
+            for (int y = 50; y < 270; y += 8) {
+                DrawLine(11, y, 335, y, Fade(detailColor, 0.025f));
+            }
         }
 
         // Draw UI Readouts
@@ -301,7 +320,6 @@ int main() {
             float response = barTargets[bar] > displayedBars[bar] ? 0.5f : 0.16f;
             displayedBars[bar] += (barTargets[bar] - displayedBars[bar]) * response;
         }
-
         constexpr float VuFullScale = 0.12f;
         float targetVu = fminf(audioRms / VuFullScale, 1.0f);
         float vuResponse = targetVu > vuLevel ? 0.45f : 0.10f;
@@ -357,7 +375,39 @@ int main() {
         DrawText("0", 356, 185, 8, Fade(activePhosphor, 0.7f));
         DrawText("1", 447, 185, 8, Fade(activePhosphor, 0.7f));
 
-        if (themes[themeIndex].bars) {
+        if (themes[themeIndex].style == DisplayStyle::PixelSpectrum) {
+            constexpr float pixelSize = 9.0f;
+            constexpr float columnStep = 12.5f;
+            constexpr float pixelStep = 11.0f;
+            constexpr float pixelLeft = 20.0f;
+            constexpr float baseline = 157.0f;
+            const Color spectrumColors[] = {
+                basePhosphor,
+                ColorLerp(basePhosphor, detailColor, 0.65f),
+                detailColor,
+                ColorLerp(detailColor, thresholdPhosphor, 0.55f),
+                thresholdPhosphor,
+                needleColor
+            };
+            for (size_t bar = 0; bar < BarCount; ++bar) {
+                int activePixels = (int)(displayedBars[bar] / pixelStep);
+                if (activePixels > 9) activePixels = 9;
+                float x = pixelLeft + bar * columnStep;
+                for (int pixel = 0; pixel < activePixels; ++pixel) {
+                    size_t colorIndex = (size_t)fminf(pixel * 5.0f / 8.0f, 5.0f);
+                    Color pixelColor = spectrumColors[colorIndex];
+                    for (int direction : {-1, 1}) {
+                        float y = baseline + direction * pixel * pixelStep;
+                        DrawRectangle((int)x, (int)y, (int)pixelSize,
+                            (int)pixelSize, Fade(pixelColor, 0.12f));
+                        DrawRectangle((int)x + 1, (int)y + 1,
+                            (int)pixelSize - 2, (int)pixelSize - 2, pixelColor);
+                    }
+                }
+                DrawRectangle((int)x, (int)baseline, (int)pixelSize,
+                    3, Fade(basePhosphor, 0.65f));
+            }
+        } else if (themes[themeIndex].style == DisplayStyle::Bars) {
             constexpr float barLeft = 18.0f;
             constexpr float barBottom = 260.0f;
             constexpr float barGap = 3.0f;
